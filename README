@@ -1,0 +1,14 @@
+Hosted at: http://github.com/Hexstream/hecss
+
+
+This library makes it easy to build a representation of CSS as lisp objects, which you can then inspect/transform/output.
+There is an included optimizer and compiler which produces highly efficient code.
+
+The syntax supports niceties such as hierarchical selectors, property replicators (ex: :margin-lr "auto" means :margin-left "auto" :margin-right "auto") and is very lispy.
+
+
+It DOES NOT currently include a macro to directly output CSS with lisp code embedded (the model currently used by most lisp CSS libraries). However, I never personally needed such a feature so far.
+
+
+This library is under the MIT license so you can do basically whatever with it.
+See the LICENSE file for details.

@@ -1,0 +1,125 @@
+(in-package #:hecss)
+
+(defclass css-optimizer ()
+  ())
+
+(defmacro with-output-to-accumulator ((accumulator-var) &body body)
+  `(let ((,accumulator-var (make-string-output-stream)))
+    (unwind-protect (progn
+		      ,@body)
+      (if ,accumulator-var
+	  (close ,accumulator-var)))))
+
+(defun optimize-css (optimizer rules)
+  (check-type rules list)
+  (let (collected)
+    (with-output-to-accumulator (accumulator)
+      (labels ((finished-batch-strings ()
+		 (let ((bof (get-output-stream-string accumulator)))
+		   (unless (zerop (length bof))
+		     (push bof collected))))
+	       (collect (thing)
+		 (let ((*print-case* :downcase))
+		   (if (typep thing '(or string symbol character number))
+		       (princ thing accumulator)
+		       (prog1 nil
+			 (finished-batch-strings)
+			 (push thing collected))))))
+	(let ((*collect* #'collect))
+	  (css-optimize optimizer rules)
+	  (finished-batch-strings)
+	  (nreverse collected))))))
+
+
+(defgeneric css-optimize (optimizer element))
+
+(defmethod css-optimize ((optimizer css-optimizer) (anything t))
+  (collect anything))
+
+(defmethod css-optimize ((optimizer css-optimizer) (rules list))
+  (dolist (rule rules)
+    (css-optimize optimizer rule)
+    (collect #\Newline)))
+
+#+nil(defmethod css-optimize ((optimizer css-optimizer) (color color-reference))
+  (let* ((color (find-palette-mapping (css-env-palette *css-env*) (color-reference-name color)))
+	 (rgb (etypecase color
+		(rgb color)
+		(hsv (hsv-to-rgb color))))
+	 (hex (format nil "#~A" (rgb-hex rgb))))
+    (collect hex)))
+
+(defmethod css-optimize ((optimizer css-optimizer) (rule css-rule))
+  (let ((selectors (rule-selectors rule))
+	(declarations (rule-declarations rule)))
+    (unless selectors
+      (error "A css rule must have at least one selector!"))
+    (css-optimize optimizer (first selectors))
+    (dolist (selector (cdr selectors))
+      (collect ", ")
+      (css-optimize optimizer selector))
+    (collect "  {")
+    (dolist (dec declarations)
+      (collect (format nil "~%    "))
+      (css-optimize optimizer dec))
+    (collect (format nil "~%}"))))
+
+(defmethod css-optimize ((optimizer css-optimizer) (sel css-simple-selector))
+  (let ((type (simple-selector-type sel))
+	(specifiers (simple-selector-specifiers sel)))
+    (if (or (string/= type "*")
+	    (not specifiers))
+	(collect type))
+    (dolist (specifier specifiers)
+      (css-optimize optimizer specifier))))
+
+(defmethod css-optimize ((optimizer css-optimizer) (sel css-id-selector))
+  (collect "#")
+  (css-optimize optimizer (id-selector-id sel)))
+
+(defmethod css-optimize ((optimizer css-optimizer) (sel css-class-selector))
+  (collect ".")
+  (css-optimize optimizer (class-selector-name sel)))
+
+(defmethod css-optimize ((optimizer css-optimizer) (sel css-pclass-selector))
+  (collect ":")
+  (css-optimize optimizer (pclass-selector-name sel)))
+
+(defmethod css-optimize ((optimizer css-optimizer) (sel css-attribute-selector))
+  (with-readers ((attribute attribute-selector-attribute)
+		 (type-operator attribute-selector-type-operator)
+		 (type attribute-selector-type)
+		 (operand attribute-selector-operand)) sel
+    (collect "[")
+    (collect attribute)
+    (collect type-operator)
+    (unless (eq type :set)
+      (collect "\"")
+      (collect operand)
+      (collect "\""))
+    (collect "]")))
+
+(defmethod css-optimize ((optimizer css-optimizer) (sel css-compound-selector))
+  (css-optimize optimizer (left-selector sel))
+  (collect (ecase (compound-selector-relation sel)
+	     (:descendant " ")
+	     (:child " > ")
+	     (:adjacent " + ")))
+  (css-optimize optimizer (right-selector sel)))
+
+(defmethod css-optimize ((optimizer css-optimizer) (dec css-declaration))
+  (collect (declaration-property dec))
+  (collect ": ")
+  (css-optimize optimizer (declaration-value dec))
+  (collect ";"))
+
+(defmethod css-optimize ((optimizer css-optimizer) (css-list css-list))
+  (let ((elements (css-list-elements css-list)))
+    (when elements
+      (let ((separator (ecase (css-list-type css-list)
+			 (:space " ")
+			 (:comma ", "))))
+	(css-optimize optimizer (car elements))
+	(dolist (element (cdr elements))
+	  (collect separator)
+	  (css-optimize optimizer element))))))
