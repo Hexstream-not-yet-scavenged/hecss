@@ -8,8 +8,7 @@
 
 (defsystem hecss
   :author "Hexstream"
-  :depends-on (cl-utilities-subset
-	       iterate
+  :depends-on (iterate
 	       com.hexstreamsoft.lib
 	       com.hexstreamsoft.lib.color
 	       puri
