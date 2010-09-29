@@ -2,7 +2,6 @@
 
 (defpackage #:hecss
   (:use #:cl
-	#:iterate
 	#:com.hexstreamsoft.lib
 	#:com.hexstreamsoft.lib.color
 	#:puri

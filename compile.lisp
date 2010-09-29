@@ -24,11 +24,12 @@
 	(values))))
 
 (defmethod css-compile ((compiler css-compiler) (rules list))
-  (call-in-sequence (loop for rule in rules
-			  collect (let ((compiled (css-compile compiler rule)))
-				    #'(lambda (renderer stream)
-					(funcall compiled renderer stream)
-					(terpri stream))))))
+  (call-in-sequence (mapcar (lambda (rule)
+			      (let ((compiled (css-compile compiler rule)))
+				#'(lambda (renderer stream)
+				    (funcall compiled renderer stream)
+				    (terpri stream))))
+			    rules)))
 
 (defmethod css-compile ((compiler css-compiler) (import css-import))
   (let ((compiled-target (css-compile compiler (css-import-target import)))

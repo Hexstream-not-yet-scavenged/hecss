@@ -1,10 +1,11 @@
 (in-package #:hecss)
 
 (defmacro with-css-identifiers ((&rest identifiers) &body body)
-  `(let (,@(loop for identifier in identifiers
-		 collect `(,identifier ,(string-downcase (symbol-name identifier)))))
-    (declare (ignorable ,@identifiers))
-    ,@body))
+  `(let (,@(mapcar (lambda (identifier)
+		     `(,identifier ,(string-downcase (symbol-name identifier))))
+	     identifiers))
+     (declare (ignorable ,@identifiers))
+     ,@body))
 
 (defun form-with-operator-p (form operator)
   (and (consp form)
@@ -24,12 +25,13 @@
 
 (defun expand-rule (rule)
   (let* ((selectors (first rule))
-	 (nested (loop for nested in (cddr rule)
-		       nconc (expand-rule (destructuring-bind ((operator &rest selector-rest)
-							       &rest rule-rest)
-					      nested
-					    `((,operator ,selectors ,@selector-rest)
-					      ,@rule-rest))))))
+	 (nested (mapcan (lambda (nested)
+			   (expand-rule (destructuring-bind ((operator &rest selector-rest)
+							     &rest rule-rest)
+					    nested
+					  `((,operator ,selectors ,@selector-rest)
+					    ,@rule-rest))))
+			 (cddr rule))))
     (if (second rule)
 	(cons (list (first rule)
 		    (second rule))
@@ -52,8 +54,10 @@
       :selectors (list ,@(if (form-with-operator-p selectors 'or)
 			     (mapcar #'css-build-selector (cdr selectors))
 			     (list (css-build-selector selectors))))
-      :declarations (list ,@(loop for (property value) on declarations by #'cddr
-				  nconc (css-build-declaration property value))))))
+      :declarations (list ,@(mapcon (compose-rr (destructuring-lambda ((property value))
+						  (css-build-declaration property value))
+						(constantly nil))
+				    declarations)))))
 
 (defun css-build-selector (selector)
   (or (and (consp selector)

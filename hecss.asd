@@ -8,8 +8,7 @@
 
 (defsystem hecss
   :author "Hexstream"
-  :depends-on (iterate
-	       com.hexstreamsoft.lib
+  :depends-on (com.hexstreamsoft.lib
 	       com.hexstreamsoft.lib.color
 	       puri
 	       com.hexstreamsoft.lib.shared-html-css)
