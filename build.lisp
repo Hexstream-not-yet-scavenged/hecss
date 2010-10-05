@@ -54,10 +54,9 @@
       :selectors (list ,@(if (form-with-operator-p selectors 'or)
 			     (mapcar #'css-build-selector (cdr selectors))
 			     (list (css-build-selector selectors))))
-      :declarations (list ,@(mapcon (compose-rr (destructuring-lambda ((property value))
-						  (css-build-declaration property value))
-						(constantly nil))
-				    declarations)))))
+      :declarations (list ,@(mappcon (lambda (property value)
+				       (css-build-declaration property value))
+				     declarations)))))
 
 (defun css-build-selector (selector)
   (or (and (consp selector)
