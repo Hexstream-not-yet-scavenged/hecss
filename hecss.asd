@@ -9,7 +9,7 @@
 	       #:com.hexstreamsoft.lib.color
 	       #:puri
 	       #:com.hexstreamsoft.lib.shared-html-css)
-  :serial t
+  :serial cl:t
   :components ((:file "package")
 	       (:file "css-env")
 	       (:module "element" :serial t :components
