@@ -10,5 +10,5 @@ The syntax supports niceties such as hierarchical selectors, property replicator
 It DOES NOT currently include a macro to directly output CSS with lisp code embedded (the model currently used by most lisp CSS libraries). However, I never personally needed such a feature so far.
 
 
-This library is under the MIT license so you can do basically whatever with it.
-See the LICENSE file for details.
+This library is in the Public Domain.
+See the UNLICENSE file for details.

@@ -1,17 +1,14 @@
-;;;; -*- mode: lisp -*-
+(asdf:defsystem #:hecss
 
-(in-package #:cl-user)
-(defpackage #:hecss.system
-  (:use :cl :asdf))
-(in-package #:hecss.system)
+  :author "Jean-Philippe Paradis <hexstream@gmail.com>"
 
+  ;; See the UNLICENSE file for details.
+  :license "Public Domain"
 
-(defsystem hecss
-  :author "Hexstream"
-  :depends-on (com.hexstreamsoft.lib
-	       com.hexstreamsoft.lib.color
-	       puri
-	       com.hexstreamsoft.lib.shared-html-css)
+  :depends-on (#:com.hexstreamsoft.lib
+	       #:com.hexstreamsoft.lib.color
+	       #:puri
+	       #:com.hexstreamsoft.lib.shared-html-css)
   :serial t
   :components ((:file "package")
 	       (:file "css-env")
